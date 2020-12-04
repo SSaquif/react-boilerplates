@@ -1,4 +1,5 @@
-import { createContext, useReducer } from "react";
+import { createContext, useReducer, useEffect } from "react";
+import { auth, googleAuthProvider } from "../Firebase/firebase";
 
 export const CurrentUserContext = createContext(null);
 
@@ -38,7 +39,7 @@ const CurrentUserProvider = ({ children }) => {
   const googleSignIn = async (ev) => {
     ev.preventDefault();
     try {
-      // await
+      await auth.signInWithPopup(googleAuthProvider);
     } catch (err) {
       console.log(err);
     }
@@ -46,7 +47,22 @@ const CurrentUserProvider = ({ children }) => {
 
   const googleSignOut = (ev) => {
     ev.preventDefault();
+    auth.signOut();
   };
+
+  useEffect(() => {
+    const unlisten = auth.onAuthStateChanged((user) => {
+      if (user) {
+        dispatchCurrentUser({ type: "sign-in", payload: user });
+      } else {
+        dispatchCurrentUser({ type: "sign-out", payload: user });
+      }
+    });
+
+    return () => {
+      unlisten();
+    };
+  }, []);
 
   return (
     <CurrentUserContext.Provider
